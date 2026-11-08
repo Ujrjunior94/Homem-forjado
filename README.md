@@ -67,3 +67,13 @@ A conta é opcional. Para habilitá-la em uma implantação:
 4. Abra **Biblioteca & ajustes → Minha conta**, entre com o código e use **Incluir registros do navegador** se quiser copiar seus dados locais existentes. A cópia anterior do navegador fica separada da conta.
 
 A sincronização guarda anotações, destaques, pregações, diário e progresso. Leituras em outros dispositivos recuperam a última cópia gravada. Se dois aparelhos editarem o mesmo item, o app espera uma escolha antes de gravar. Os backups JSON continuam disponíveis. O cronômetro e o tamanho de fonte ficam no dispositivo.
+
+## Instalação e leitura offline (2.3)
+
+Em **Biblioteca & ajustes → Instalar aplicativo**, o navegador oferece a instalação ou mostra como adicionar à tela inicial. Há ícones PNG de 192 e 512 pixels, ícone adaptável Android, ícone Apple e atalhos para Bíblia, devocionais e pregações.
+
+O primeiro acesso com internet instala um cache completo da interface, Bíblia portuguesa e materiais locais. **Preparar leitura offline** baixa também os 66 livros em hebraico/grego, mostra o progresso e permite retomar downloads parciais. PDFs pessoais, léxico externo e sincronização de conta precisam de internet. Os dados continuam sujeitos às políticas de armazenamento do navegador; mantenha backups dos registros importantes.
+
+As versões usam cache calculado pelo conteúdo, sem troca automática da versão aberta. Quando houver atualização, o botão **Atualizar agora** ativa a nova versão. O cache dos originais permanece nas atualizações que não alteram esses textos.
+
+Validação: `npm run build && npm test` executa 12 testes, incluindo completude dos ícones/arquivos, ativação explícita e leitura do cache com rede simulada indisponível. Isso não substitui a instalação e o teste de desconexão em um aparelho físico. A configuração do banco continua pendente enquanto não houver projeto Supabase vinculado e teste real de autenticação/sincronização.

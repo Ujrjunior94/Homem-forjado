@@ -1,0 +1,97 @@
+import fitz,json,re,io
+from pathlib import Path
+from PIL import Image
+import argparse
+parser=argparse.ArgumentParser(description='Build study sessions and native illustrations from the four locally supplied PDFs.')
+parser.add_argument('--input-directory',type=Path,required=True)
+args=parser.parse_args()
+root=Path(__file__).resolve().parents[1];src=args.input_directory;out=root/'src/media/studies';out.mkdir(parents=True,exist_ok=True)
+docs={k:fitz.open(next(src.glob(p+'*.pdf'))) for k,p in [('jornada','Jornada'),('desafio','Desafio'),('profecias','Profecias'),('quiz','250')]}
+figs={}
+def figure(id,source,page,box,caption,alt):
+ d=docs[source];pg=d[page-1];rect=fitz.Rect(*(v*(pg.rect.width if i%2==0 else pg.rect.height) for i,v in enumerate(box)))
+ pix=pg.get_pixmap(matrix=fitz.Matrix(2,2),clip=rect,alpha=False);im=Image.frombytes('RGB',(pix.width,pix.height),pix.samples);im.thumbnail((1100,1500));im.save(out/(id+'.webp'),'WEBP',quality=84)
+ figs[id]={'id':id,'src':'/media/studies/'+id+'.webp','source':source,'page':page,'box':box,'caption':caption,'alt':alt,'width':im.width,'height':im.height}
+figure('divisao','jornada',12,(.035,.1,.97,.77),'Diagrama de organização dos livros, reproduzido do material. A coleção protestante é a usada neste leitor.','Diagrama circular com a organização dos livros do Antigo e Novo Testamento.')
+figure('criacao','jornada',23,(.12,.18,.94,.94),'Sequência dos dias da criação no material. Compare a organização com Gênesis 1:1–2:3.','Quadro ilustrado que relaciona os dias da criação às passagens de Gênesis.')
+figure('arca','jornada',26,(.09,.20,.96,.94),'Ilustração da arca no guia. Medidas e reconstrução visual são aproximadas; leia Gênesis 6.','Representação da arca com um quadro de medidas apresentado pelo guia.')
+figure('moises','jornada',34,(.56,.08,.98,.94),'Ilustração do nascimento de Moisés, extraída da página sobre Êxodo 2.','Ilustração de um cesto entre os juncos à margem do rio.')
+figure('mar','jornada',36,(.35,.13,.91,.30),'Ilustração da travessia no material. Observe a narrativa de Êxodo 14 antes de discutir a cena.','Representação artística de um caminho entre águas.')
+figure('deserto','jornada',57,(.19,.22,.83,.36),'Acampamento no deserto, ilustração do guia para a leitura de Números.','Representação artística de tendas e do acampamento de Israel no deserto.')
+figure('serpente','jornada',60,(.65,.18,.96,.40),'A serpente de bronze na ilustração do guia. Relacione Números 21:4–9 com João 3:14–15.','Ilustração de uma serpente de bronze erguida sobre uma haste.')
+figure('rute','jornada',82,(.16,.65,.56,.79),'Campo de cereais, imagem do guia para o estudo de Rute e do cuidado com quem recolhe espigas.','Campo de cereais iluminado pelo sol.')
+figure('reinos','jornada',103,(.07,0,.96,.95),'Cronologia apresentada pelo PDF. As datas são esquemáticas e não constituem consenso sobre todos os reinados.','Quadro do guia com os reis de Israel e Judá em duas colunas.')
+figure('genealogia','jornada',180,(.07,.03,.94,.88),'Genealogia apresentada no guia. Leia Mateus 1:1–17 e Lucas 3:23–38 e observe as diferenças entre suas organizações.','Quadro genealógico do material relacionando personagens bíblicos.')
+figure('ministerios','jornada',211,(.07,.03,.93,.88),'Quadro confessional do PDF sobre ministérios. Compare com Efésios 4:11–16; tradições cristãs entendem esses ofícios de formas diferentes.','Quadro do material sobre apóstolos, profetas, evangelistas, pastores e mestres.')
+figure('roteiro','desafio',52,(.025,.115,.97,.965),'Primeiro roteiro complementar do PDF. Os demais roteiros foram organizados em sessões próprias; a sequência de dias contém repetições no original.','Exemplo dos cartões de leitura e reflexão do roteiro complementar.')
+# The quiz has only a cover illustration; exclude its separate logo.
+pg=docs['quiz'][0];pix=fitz.Pixmap(docs['quiz'],pg.get_images()[0][0]);im=Image.open(io.BytesIO(pix.tobytes('png'))).convert('RGB');im.thumbnail((900,900));im.save(out/'quiz.webp','WEBP',quality=84);figs['quiz']={'id':'quiz','src':'/media/studies/quiz.webp','source':'quiz','page':1,'box':None,'caption':'Ilustração da capa do banco de perguntas fornecido.','alt':'Ilustração de estudo bíblico usada na capa do quiz.','width':im.width,'height':im.height}
+
+def clean(t):
+ t=re.sub(r'[\w.+-]+@[\w.-]+\.[\w.-]+','',t);t=re.sub(r'@paulo_marcondes01','',t);t=re.sub(r'HP\d+|\b\d{11}\b|\bTeste\b','',t)
+ return ' '.join(t.replace('\u200c','').split()).strip(' .')
+def summary(page):
+ text=docs['jornada'][page-1].get_text();m=re.search(r'Resumo:\s*(.*?)(?:Período histórico:|Período Histórico:|\n\.{3,})',text,re.S)
+ return clean(m[1]) if m else None
+sessions=[]
+def add(id,source,title,pages,refs,sections,images=[],questions=None,**other):
+ sessions.append({'id':id,'source':source,'title':title,'pages':pages,'refs':refs,'sections':[{'title':h,'text':t,'kind':'adaptation'} for h,t in sections],'figures':images,'questions':questions or ['O que o texto bíblico afirma e o que é comentário do material?','Que mudança concreta esta leitura propõe para sua vida?'],'minutes':20,**other})
+foundation=[
+('biblioteca','Uma biblioteca, muitas vozes',[6,7,8,9,10],['Lucas 1:1-4','2 Timóteo 3:14-17'], [('O percurso do material','O guia apresenta a Bíblia como uma coleção transmitida por comunidades ao longo do tempo. Narrativas, poemas, leis, profecias e cartas pedem formas diferentes de leitura.'),('Observe a organização','O diagrama situa os livros nas grandes divisões do cânon protestante. Outras tradições cristãs têm coleções diferentes; a classificação ajuda a localizar um texto, mas não substitui sua leitura.')],['divisao']),
+('linguas','Línguas, tradução e leitura responsável',[11,12,13,14,15],['João 1:1-18'],[('Das línguas às traduções','O material apresenta hebraico, aramaico e grego e lembra o caminho de transmissão dos textos. Compare uma passagem em português com a edição de consulta do leitor e anote o que permanece em dúvida.'),('Contagens e curiosidades','Contagens de palavras, capítulos centrais e datas de composição dependem da edição ou da hipótese adotada. O próprio guia corrige uma conta na página 14. Não transforme curiosidades em fundamento de interpretação.')],[]),
+('panorama','A história contada em grandes movimentos',[16,17,18,19,20],['Gênesis 12:1-3','Lucas 24:44-49'],[('Promessa, povo e testemunho','O panorama passa pelo Pentateuco, história de Israel, poesia, profetas, evangelhos, Atos e cartas. Acompanhe como cada conjunto contribui com uma voz própria.'),('Um roteiro de observação','Identifique quem fala, quem ouve e qual problema o livro enfrenta. Depois situe a passagem dentro do conjunto, sem apagar a situação original dos seus leitores.')],['divisao']),
+('reinos','Reinos, profetas e exílio',[99,103,104,105,106,107,108,109,110,111,112,113],['1 Reis 12:1-20','2 Reis 17:6-18'],[('Duas histórias interligadas','A cronologia do guia permite acompanhar Israel, ao norte, e Judá, ao sul. Os livros dos Reis relacionam decisões políticas, idolatria, justiça e escuta da palavra profética.'),('Como usar a linha do tempo','Localize um rei e um profeta contemporâneo no quadro. Use as datas como orientação aproximada e confira na narrativa o que ela efetivamente diz. As relações entre hebreus, israelitas e judeus exigem atenção ao período histórico.')],['reinos']),
+('intertestamento','Do período interbíblico aos evangelhos',[173,174,175,176,177],['Lucas 1:1-4','Marcos 1:1-15'],[('O cenário dos evangelhos','O guia apresenta o período entre os Testamentos e o domínio romano como contexto para o Novo Testamento. Esses elementos ajudam a compreender as expectativas e os conflitos presentes nas narrativas.'),('Cânon e tradição','As páginas 175–176 discutem livros chamados apócrifos ou deuterocanônicos em tradições diferentes. Apresente a diferença com respeito, sem supor que todas as comunidades cristãs usam o mesmo cânon.')],[]),
+('jesus','Parábolas, sinais e caminho até a cruz',[179,180,181,186,189,190,191,192,193,194,195,196,197],['Lucas 15:11-32','João 20:30-31','Marcos 15:33-39'],[('Compare as narrativas','O guia reúne genealogias, parábolas, milagres e acontecimentos da paixão. Compare como cada evangelho organiza esses episódios e pergunte qual aspecto de Jesus é destacado.'),('História e tradição','As páginas sobre a morte dos apóstolos misturam registros do Novo Testamento e tradições posteriores, com graus diferentes de segurança. Não trate todos os relatos como acontecimentos explicitamente narrados na Bíblia. Equivalências de moedas antigas em reais são apenas ilustrações e não preços atuais.')],['genealogia']),
+('servico','Dons, ministérios e serviço à comunidade',[201,210,211,212,229],['Efésios 4:11-16','1 Coríntios 12:4-7'],[('Dons para edificar','O material organiza os ministérios em um quadro. Efésios relaciona os dons ao aperfeiçoamento dos santos e ao crescimento do corpo; leia os versículos antes e depois da lista.'),('Uma leitura confessional','O quadro expressa uma abordagem cristã específica. Comunidades divergem sobre a continuidade e as formas desses ofícios. Avalie qualquer proposta pela centralidade de Cristo, pelo serviço e pela edificação dos outros.')],['ministerios'])]
+for id,title,pages,refs,secs,images in foundation:add('jornada-'+id,'jornada',title,pages,refs,secs,images)
+# Exact physical PDF pages, not the printed page numbers inside the document.
+starts=[21,33,48,55,62,69,76,82,86,92,99,111,114,116,118,120,122,125,127,129,131,133,136,139,141,143,145,149,151,153,155,157,159,161,163,165,167,169,171,178,182,184,187,198,202,204,206,208,210,213,215,217,219,221,223,225,227,230,232,234,236,238,240,242,244,247]
+ends=[32,47,54,61,68,75,81,85,91,98,110,113,115,117,119,121,123,126,128,130,132,133,138,140,142,144,147,150,152,154,156,158,160,162,164,166,168,170,172,181,183,186,197,200,203,205,207,209,212,214,216,218,220,222,224,226,228,231,233,235,237,239,241,243,245,250]
+import gzip
+books=json.loads(gzip.decompress((root/'assets/bible.json.gz').read_bytes()));summaries=json.loads((root/'src/data/summaries.json').read_text())
+focus={1:['Gênesis 1:1-5','Gênesis 12:1-3'],2:['Êxodo 3:1-12','Êxodo 14:13-22'],3:['Levítico 19:1-18'],4:['Números 21:4-9','João 3:14-15'],5:['Deuteronômio 6:4-9'],6:['Josué 1:1-9'],7:['Juízes 2:10-19'],8:['Rute 2:1-12'],9:['1 Samuel 16:1-13'],10:['2 Samuel 7:1-16'],11:['1 Reis 3:5-14'],12:['2 Reis 5:1-14'],18:['Jó 1:1-22'],19:['Salmos 23'],20:['Provérbios 1:1-7'],23:['Isaías 6:1-8'],26:['Ezequiel 37:1-14'],27:['Daniel 3:13-18'],32:['Jonas 4:1-11'],40:['Mateus 5:1-12'],41:['Marcos 10:35-45'],42:['Lucas 15:11-32'],43:['João 1:1-18'],44:['Atos 1:1-11'],45:['Romanos 12:1-8'],46:['1 Coríntios 13:1-13'],49:['Efésios 4:11-16'],58:['Hebreus 11:1-6'],59:['Tiago 2:14-26'],66:['Apocalipse 21:1-8']}
+imgbybook={1:['criacao','arca'],2:['moises','mar'],4:['deserto','serpente'],8:['rute'],11:['reinos'],12:['reinos'],40:['genealogia'],49:['ministerios']}
+for b,start,end,abstract in zip(books,starts,ends,summaries):
+ sections=[('Panorama do livro',abstract)]
+ excerpt=summary(start)
+ if excerpt and excerpt!=abstract:sections.append(('Resumo apresentado pelo guia',excerpt))
+ sections.append(('Roteiro para estudar o livro','Leia a passagem indicada e situe-a no argumento do livro. Identifique uma repetição, uma tensão ou um contraste. Descreva como esse detalhe se relaciona com o tema apresentado no panorama; sustente sua conclusão com versículos.'))
+ add('livro-'+str(b['id']),'jornada',b['name']+' — leitura e contexto',list(range(start,end+1)),focus.get(b['id'],[b['name']+' 1']),sections,imgbybook.get(b['id'],[]),[f'Como a passagem escolhida desenvolve o tema de {b["name"]}?','O que você observou no texto e o que veio da explicação do guia?','Qual pergunta você deseja investigar antes de preparar uma aplicação?'],book=b['id'],note='Autoria, datas e cronologias do PDF incluem atribuições tradicionais e hipóteses. A numeração das páginas aqui é a do arquivo, que pode divergir do rodapé impresso.')
+weeks=json.loads((root/'src/data/devotionals.json').read_text())
+for w in weeks:
+ add('devocional-'+str(w['id']),'desafio',f'Semana {w["id"]} — {w["title"]}',[w['page'],w['reflectionPage']],[w['key']], [('Uma semana de escuta','Abra os dias abaixo, leia as passagens no leitor e use a reflexão como ponto de partida. Registre o que o texto ensina, uma oração e uma atitude concreta. Reserve o sétimo dia para retomar a semana.')],['divisao'] if w['id']==1 else [],days=w['days'],note=w.get('warning') or 'Reflexões do material de Paulo Marcondes. O arquivo contém repetições; preserve a leitura bíblica como referência principal.')
+ sessions[-1]['minutes']=15
+# Complementary planners: extract each card by its layout, excluding social handles/footers.
+for page in range(52,63):
+ pg=docs['desafio'][page-1];text=pg.get_text();week=int(re.search(r'SEMANA\s+(\d+)',text)[1]);cards=[]
+ # Physical layout is two columns by four rows. Store genuine PDF card text, not invented daily reflections.
+ for x0,x1,y0,y1 in [(0,.49,.112,.343),(.52,.99,.112,.343),(0,.49,.343,.575),(.52,.99,.343,.575),(0,.49,.575,.81),(.52,.99,.575,.81),(.52,.99,.81,.962)]:
+  t=clean(pg.get_text(clip=fitz.Rect(x0*pg.rect.width,y0*pg.rect.height,x1*pg.rect.width,y1*pg.rect.height)))
+  refs=[]
+  for name,num in re.findall(r'(Gênesis|Êxodo|Salmos|Provérbios|Proverbios|Mateus|Marcos|Lucas|João)\s+(\d+(?:\s+e\s+\d+)?)',t):
+   refs.extend(name.replace('Proverbios','Provérbios')+' '+n.strip() for n in num.split(' e '))
+  m=re.search(r'DIA\s+(\d+)',t)
+  reflection=''
+  for block in pg.get_text('blocks'):
+   if 'Pense sobre:' in block[4] and x0*pg.rect.width <= (block[0]+block[2])/2 < x1*pg.rect.width and y0*pg.rect.height <= (block[1]+block[3])/2 < y1*pg.rect.height:
+    reflection=clean(block[4].split('Pense sobre:',1)[1]).replace('ritm dos','ritmo dos')
+    break
+  cards.append({'day':int(m[1]) if m else None,'refs':refs,'reflection':reflection})
+ add('roteiro-'+str(week),'desafio',f'Semana {week} — roteiro complementar',[page],[],[('Leitura em três frentes','Este roteiro aproxima Lei, sabedoria e evangelhos. Retome os cartões extraídos abaixo e escolha uma conexão entre as leituras, sem forçar que tratem do mesmo assunto.'),('Como registrar','Depois de ler, escreva uma observação de cada livro e responda ao convite de reflexão do cartão. A sequência impressa repete os dias 36–42 nas semanas 26 e 27; as sessões preservam essa repetição do arquivo.')],['roteiro'] if page==52 else [],cards=cards,note='Roteiro complementar fornecido nas páginas finais. A numeração dos dias e algumas referências têm irregularidades no original; confira no leitor antes de avançar.')
+prop=[('ouvir','Como ouvir uma palavra profética',[2],['Amós 5:21-24']),('messias','Promessa e leitura messiânica',[3,7],['Isaías 53:1-12','Lucas 4:16-21']),('exilio','Juízo, exílio e restauração',[4,5],['Jeremias 25:1-14','Esdras 1:1-4']),('novo','Profecia no Novo Testamento',[6],['Mateus 24:1-14','Apocalipse 1:1-8']),('historia','Profecia, história e cultura',[8,9],['Lucas 21:5-19']),('discernir','Discernimento, fé e esperança',[10,11],['1 Tessalonicenses 5:19-22','Romanos 15:4'])]
+for id,title,pages,refs in prop:
+ excerpts=[]
+ for page in pages:
+  text=docs['profecias'][page-1].get_text();lines=[l.strip() for l in text.splitlines() if l.strip() and not l.startswith('CAPÍTULO')]
+  excerpts.append({'title':'Leitura do material · p. '+str(page),'text':clean(' '.join(lines)),'kind':'source'})
+ add('profecia-'+id,'profecias',title,pages,refs,[('Antes de interpretar','Situe a mensagem em seu contexto, identifique o destinatário e observe a linguagem utilizada. O material adota uma leitura cristã; distingua a afirmação do texto, a interpretação do autor e sua aplicação hoje.')],[],['Qual era a situação enfrentada pelos primeiros destinatários?','Que correspondência o material propõe e qual passagem sustenta essa leitura?','O que é uma interpretação possível e o que o texto permite afirmar com segurança?'],note='Profecias possuem leituras diferentes entre tradições cristãs. Evite marcar datas ou tratar associações com acontecimentos atuais como consenso.')
+ sessions[-1]['sections']+=excerpts
+questions=json.loads((root/'src/data/quiz.json').read_text())
+for i in range(0,250,10):
+ qs=questions[i:i+10];refs=list(dict.fromkeys(q['ref'] for q in qs if q['ref']))
+ add('quiz-'+str(i//10+1),'quiz',f'Oficina {i//10+1:02} — perguntas {i+1} a {i+10}',sorted(set(q['page'] for q in qs)),refs,[('Aprender pelo retorno ao texto','Responda antes de abrir o gabarito. Para cada questão, procure a passagem e explique com suas palavras por que a alternativa corresponde ao texto. A pontuação não substitui a compreensão.')],['quiz'] if i==0 else [],quizIds=[q['id'] for q in qs],note='O banco preserva perguntas do PDF. Há 29 questões conferidas com passagens; as demais mantêm o gabarito atribuído ao material. A questão 237 não tem resposta fornecida. Questões não conferidas não recebem selo de correção.')
+collections=[{'id':id,'title':title,'subtitle':sub,'author':author,'pages':len(docs[id]),'count':sum(s['source']==id for s in sessions)} for id,title,sub,author in [('jornada','Jornada da Bíblia','Fundamentos, contexto e estudo dos 66 livros.','Paulo Marcondes'),('desafio','Desafio Bíblico','20 semanas devocionais e 11 roteiros complementares.','Paulo Marcondes'),('profecias','Profecias Bíblicas','Seis percursos sobre promessa, contexto e discernimento.','Material fornecido · autoria não identificada'),('quiz','Oficinas do quiz','25 sessões com as 250 perguntas do material.','Material fornecido · autoria não identificada')]]
+data={'collections':collections,'sessions':sessions,'figures':figs}
+(root/'src/data/pdf-studies.json').write_text(json.dumps(data,ensure_ascii=False,separators=(',',':')))
+print(json.dumps({'sessions':len(sessions),'collections':collections,'figures':len(figs),'bytes':sum(p.stat().st_size for p in out.glob('*'))},ensure_ascii=False))

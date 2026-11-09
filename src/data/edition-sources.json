@@ -1,0 +1,22 @@
+{
+  "arc1911": {
+    "title": "A Biblia Sagrada, Contendo o Velho e o Novo Testamento",
+    "edition": "Edição revista e corrigida, primeira edição de 1900; reimpressão Lisboa 1911",
+    "translation": "João Ferreira d’Almeida e revisão histórica",
+    "transcription": "Júlio Reis, abi278, Sergio Queiroz e Online Distributed Proofreading Team; imagens de Faithofgod.net",
+    "catalog": "https://www.gutenberg.org/ebooks/62383",
+    "download": "https://www.gutenberg.org/files/62383/62383-h/62383-h.htm",
+    "source_sha256": "6d18d46017214e4eb4396fe73c8aaf85a687ef034edc91d7612aef732967aab3",
+    "rights": "Domínio público; catálogo do Projeto Gutenberg indica Public domain in the USA",
+    "processing": "Extração do texto dos parágrafos de versículos; remove números de página, índices de notas e marcação HTML; mantém grafia e texto da transcrição. 66 livros, 1189 capítulos, 31104 versículos numerados. Não é a ARC moderna."
+  },
+  "bpm": {
+    "title": "Bíblia Portuguesa Mundial",
+    "catalog": "https://ebible.org/Scriptures/details.php?id=porbrbsl",
+    "download": "https://ebible.org/Scriptures/porbrbsl_usfx.zip",
+    "source_xml_sha256": "992a9c1dd6b49b00dc43ce11daf39801e126ff67285d2c8d490e414735c481ca",
+    "rights": "Domínio público",
+    "status": "Rascunho de tradução ainda em revisão, conforme a fonte",
+    "processing": "Seleção dos mesmos 66 livros usados no leitor; fonte também contém outros livros. Texto USFX sem cabeçalhos ou notas. 1189 capítulos, 31098 versículos com texto; numeração preservada e versículos sem texto omitidos sem preenchimento por outra versão."
+  }
+}

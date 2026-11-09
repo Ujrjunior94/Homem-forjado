@@ -11,6 +11,7 @@ if ((url || key) && (!/^https:\/\/[a-z0-9]+\.supabase\.co$/.test(url) || !/^sb_p
 }
 await writeFile('dist/sync-config.json', JSON.stringify(url ? {url,key,authReady:process.env.HF_SUPABASE_AUTH_READY === 'true'} : {}));
 await writeFile('dist/data/bible.json', gunzipSync(await readFile('assets/bible.json.gz')));
+for(const edition of ['arc1911','bpm']) await writeFile(`dist/data/bible-${edition}.json`,gunzipSync(await readFile(`assets/bible-${edition}.json.gz`)));
 const originals=JSON.parse(gunzipSync(await readFile('assets/originals.json.gz')));
 for (const [osis, data] of Object.entries(originals)) await writeFile(`dist/data/original/${osis}.json`, JSON.stringify(data));
 async function listFiles(directory) {

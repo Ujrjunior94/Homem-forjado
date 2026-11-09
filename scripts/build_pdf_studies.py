@@ -13,7 +13,7 @@ def figure(id,source,page,box,caption,alt):
  pix=pg.get_pixmap(matrix=fitz.Matrix(2,2),clip=rect,alpha=False);im=Image.frombytes('RGB',(pix.width,pix.height),pix.samples);im.thumbnail((1100,1500));im.save(out/(id+'.webp'),'WEBP',quality=84)
  figs[id]={'id':id,'src':'/media/studies/'+id+'.webp','source':source,'page':page,'box':box,'caption':caption,'alt':alt,'width':im.width,'height':im.height}
 figure('divisao','jornada',12,(.035,.1,.97,.77),'Diagrama de organização dos livros, reproduzido do material. A coleção protestante é a usada neste leitor.','Diagrama circular com a organização dos livros do Antigo e Novo Testamento.')
-figure('criacao','jornada',23,(.12,.18,.94,.94),'Sequência dos dias da criação no material. Compare a organização com Gênesis 1:1–2:3.','Quadro ilustrado que relaciona os dias da criação às passagens de Gênesis.')
+figure('criacao','jornada',23,(.115,.15,.90,.978),'Sequência dos dias da criação no material. Compare a organização com Gênesis 1:1–2:3.','Quadro ilustrado que relaciona os dias da criação às passagens de Gênesis.')
 figure('arca','jornada',26,(.09,.20,.96,.94),'Ilustração da arca no guia. Medidas e reconstrução visual são aproximadas; leia Gênesis 6.','Representação da arca com um quadro de medidas apresentado pelo guia.')
 figure('moises','jornada',34,(.56,.08,.98,.94),'Ilustração do nascimento de Moisés, extraída da página sobre Êxodo 2.','Ilustração de um cesto entre os juncos à margem do rio.')
 figure('mar','jornada',36,(.35,.13,.91,.30),'Ilustração da travessia no material. Observe a narrativa de Êxodo 14 antes de discutir a cena.','Representação artística de um caminho entre águas.')

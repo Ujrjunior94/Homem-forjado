@@ -98,3 +98,12 @@ Para reconstruir a extração a partir dos quatro arquivos locais, use `python s
 ## Homens da Bíblia (2.5)
 
 Seção própria no índice inicial, no menu e em Estudos. São 32 perfis com contexto, feitos, modo de agir, propósito/papel no relato, limites e três aprendizados. Os textos distinguem chamados declarados de sínteses narrativas e mantêm Jesus em uma categoria própria. Cada perfil abre as passagens no leitor, permite reflexão e conclusão e usa as chaves `lesson:man:<id>` e `lessonDone[man:<id>]`, já cobertas pelo backup/sincronização. O caderno abre novamente o perfil correto. Há busca por nome/tema, filtro por grupo, links diretos e navegação entre perfis. Dados e módulo são incluídos no cache da PWA.
+
+
+## Aprofundamento dos estudos (2.6)
+
+Os 32 perfis de Homens da Bíblia passam a incluir contexto narrativo, duas passagens analisadas em detalhe, síntese teológica, duas conexões explicadas, quatro questões de investigação e uma proposta prática específica. O estudo conserva as distinções entre chamado declarado, papel narrativo e aplicação, e preserva as chaves existentes de notas e progresso.
+
+O mesmo formato foi adicionado a 20 sessões dos PDFs: os sete percursos introdutórios de Jornada, os estudos de Gênesis, Êxodo, Josué, Rute, 1 Samuel, 2 Samuel e 1 Reis, e as seis sessões de Profecias. As outras sessões mantêm seu conteúdo anterior. A curadoria suplementar fica em `pdf-study-depth.json` e é reintegrada pelo script de extração, evitando sua perda em reconstruções.
+
+O módulo compartilhado `study-depth.js` mostra os textos da Bíblia incluída junto da análise; passagens maiores mostram os oito primeiros versículos com aviso e acesso ao leitor completo. A navegação interna percorre contexto, análise, conexões e investigação. O acréscimo é conteúdo editorial de estudo, sem atribuição de motivos divinos não declarados nem uso de promessas como garantias pessoais de resultado.

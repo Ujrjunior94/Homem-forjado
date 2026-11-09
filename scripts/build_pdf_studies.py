@@ -105,6 +105,11 @@ for i in range(0,250,10):
  qs=questions[i:i+10];refs=list(dict.fromkeys(q['ref'] for q in qs if q['ref']))
  add('quiz-'+str(i//10+1),'quiz',f'Oficina {i//10+1:02} — perguntas {i+1} a {i+10}',sorted(set(q['page'] for q in qs)),refs,[('Aprender pelo retorno ao texto','Responda antes de abrir o gabarito. Para cada questão, procure a passagem e explique com suas palavras por que a alternativa corresponde ao texto. A pontuação não substitui a compreensão.')],['quiz'] if i==0 else [],quizIds=[q['id'] for q in qs],note='O banco preserva perguntas do PDF. Há 29 questões conferidas com passagens; as demais mantêm o gabarito atribuído ao material. A questão 237 não tem resposta fornecida. Questões não conferidas não recebem selo de correção.')
 collections=[{'id':id,'title':title,'subtitle':sub,'author':author,'pages':len(docs[id]),'count':sum(s['source']==id for s in sessions)} for id,title,sub,author in [('jornada','Jornada da Bíblia','Fundamentos, contexto e estudo dos 66 livros.','Paulo Marcondes'),('desafio','Desafio Bíblico','20 semanas devocionais e 11 roteiros complementares.','Paulo Marcondes'),('profecias','Profecias Bíblicas','Seis percursos sobre promessa, contexto e discernimento.','Material fornecido · autoria não identificada'),('quiz','Oficinas do quiz','25 sessões com as 250 perguntas do material.','Material fornecido · autoria não identificada')]]
+depth_path=root/'src/data/pdf-study-depth.json'
+if depth_path.exists():
+ for session in sessions:
+  depth=json.loads(depth_path.read_text()).get(session['id'])
+  if depth:session['depth']=depth
 data={'collections':collections,'sessions':sessions,'figures':figs}
 (root/'src/data/pdf-studies.json').write_text(json.dumps(data,ensure_ascii=False,separators=(',',':')))
 print(json.dumps({'sessions':len(sessions),'collections':collections,'figures':len(figs),'bytes':sum(p.stat().st_size for p in out.glob('*'))},ensure_ascii=False))

@@ -156,10 +156,10 @@ function search(){
 
 function menView(){
  const person=men.find(p=>p.id===manId);
- return person?manProfile(men,person,state):menIndex(men,state,{query:menQuery,group:menGroup});
+ return person?manProfile(men,person,state,books):menIndex(men,state,{query:menQuery,group:menGroup});
 }
 function studies(){
- if(studyTab==='pdf'&&pdfSessionId){const session=pdfStudies.sessions.find(x=>x.id===pdfSessionId);if(session)return pdfStudySession(pdfStudies,session,state,quiz);}
+ if(studyTab==='pdf'&&pdfSessionId){const session=pdfStudies.sessions.find(x=>x.id===pdfSessionId);if(session)return pdfStudySession(pdfStudies,session,state,quiz,books);}
  if(lessonId){const l=lessons.find(x=>x.id===lessonId);if(l)return lesson(l);}
  const filtered=lessons.filter(l=>normalize(l.title+' '+l.category+' '+l.subtitle).includes(normalize(studyFilter)));
  return `${header('Conheça a história. Compreenda o texto.','Um estudo cuidadoso começa com boas perguntas.','ESTUDOS & TRILHAS')}<div class="tabs"><button data-nav="homens">Homens da Bíblia</button><button data-action="study-tab" data-tab="pdf" class="${studyTab==='pdf'?'active':''}">Sessões dos PDFs</button><button data-action="study-tab" data-tab="trilhas" class="${studyTab==='trilhas'?'active':''}">Trilhas de estudo</button><button data-action="study-tab" data-tab="panorama" class="${studyTab==='panorama'?'active':''}">Panorama dos 66 livros</button><button data-action="study-tab" data-tab="guias" class="${studyTab==='guias'?'active':''}">Guias por passagem</button></div>${studyTab==='pdf'?pdfStudyIndex(pdfStudies,state,{source:pdfSource,query:pdfQuery}):studyTab==='guias'?guideIndex():studyTab==='trilhas'?`<div class="filter-row"><div class="search-field">${icon('search',16)}<input id="study-filter" type="search" aria-label="Filtrar trilhas" placeholder="Busque um tema de estudo…" value="${e(studyFilter)}"></div><span class="helper">${lessons.filter(l=>state.lessonDone[l.id]).length} de ${lessons.length} concluídos</span></div><div class="grid-2">${filtered.map(l=>`<button class="study-card" data-action="lesson" data-id="${l.id}"><span class="tag ${l.category==='Profecias'?'gold':''}">${state.lessonDone[l.id]?icon('check',11):''}${l.category}</span><h3>${l.title}</h3><p>${l.subtitle}</p><span class="textlink">Abrir estudo ${icon('arrow',14)}</span></button>`).join('')||empty('Nenhuma trilha encontrada.','Tente outro tema.')}</div>`:panorama()}`;
@@ -368,6 +368,7 @@ document.addEventListener('click',async event=>{
  case 'study-tab':studyTab=d.tab;lessonId=null;pdfSessionId=null;render();break;
  case 'pdf-source':pdfSessionId=null;pdfSource=d.source;pdfQuery='';studyTab='pdf';lessonId=null;location.hash='estudos?colecao='+encodeURIComponent(pdfSource);break;
  case 'pdf-session':lessonId=null;studyTab='pdf';location.hash='estudos?pdf='+encodeURIComponent(d.id);break;
+ case 'study-jump':document.getElementById(d.target)?.scrollIntoView({behavior:'smooth',block:'start'});break;
  case 'man-profile':location.hash='homens?personagem='+encodeURIComponent(d.id);break;
  case 'pdf-answer':state.answers[d.question]=Number(d.option);save();render();break;
  case 'pdf-image':{const f=pdfStudies.figures[d.id];if(f)showModal(`<figure class="pdf-figure pdf-expanded"><img src="${e(f.src)}" width="${f.width}" height="${f.height}" alt="${e(f.alt)}"><figcaption>${e(f.caption)}</figcaption></figure>`);break;}

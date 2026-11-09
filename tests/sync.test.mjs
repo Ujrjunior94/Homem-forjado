@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createSync, mergeBackups, mergeGuestRecords, snapshot } from '../src/sync.js';
+import { createSync, consumeAuthReturn, mergeBackups, mergeGuestRecords, snapshot } from '../src/sync.js';
 
 test('different edits and deletions merge, while conflicting text requires a choice', () => {
   const base = snapshot({ notes: { a: 'Inicial', b: 'Apagar' } });
@@ -79,4 +79,37 @@ test('sync retries a concurrent write and preserves a keystroke made during the 
   } finally {
     await sync.signOut();
   }
+});
+
+
+test('authentication return is removed from history before validating the session', () => {
+ let target;
+ const history={replaceState:(state,title,url)=>target=url};
+ assert.equal(consumeAuthReturn({hash:'#biblia?b=43',pathname:'/',search:''},history),null);
+ assert.equal(target,undefined);
+ const value=consumeAuthReturn({hash:'#access_token=test-access&refresh_token=test-refresh&expires_in=3600',pathname:'/',search:''},history);
+ assert.equal(target,'/#biblioteca');assert.equal(value.access_token,'test-access');assert.equal(value.refresh_token,'test-refresh');
+ assert.equal(consumeAuthReturn({hash:'#error=access_denied',pathname:'/',search:''},history).error,true);
+ assert.equal(target,'/#biblioteca');
+});
+
+test('magic link validates the user before opening and synchronizing an account', async () => {
+ const previous={window:globalThis.window,fetch:globalThis.fetch};
+ let cleaned=false,current=snapshot(),cloud;
+ globalThis.sessionStorage.removeItem('hf-sync-session-v1');
+ globalThis.window={location:{hash:'#access_token=link-fixture&refresh_token=refresh-fixture&expires_in=3600',pathname:'/',search:''},history:{replaceState:()=>{cleaned=true;}}};
+ globalThis.fetch=async(url,options)=>{
+  assert.ok(cleaned);
+  if(url==='/sync-config.json')return Response.json({url:'https://fixture.supabase.co',key:'sb_publishable_fixture',authReady:true});
+  const path=new URL(url).pathname;
+  assert.equal(options.headers.Authorization,'Bearer link-fixture');
+  if(path==='/auth/v1/user')return Response.json({id:'magic-user',email:'fixture@example.invalid'});
+  if(path==='/auth/v1/logout')return Response.json({});
+  if(path==='/rest/v1/hf_study_backups')return Response.json(cloud?[cloud]:[]);
+  assert.equal(path,'/rest/v1/rpc/hf_save_study_backup');
+  cloud={revision:1,backup:JSON.parse(options.body).next_backup};return Response.json(1);
+ };
+ const sync=createSync({getState:()=>current,apply:next=>current=next||snapshot(),canApply:()=>true,notify:()=>{}});
+ try{await sync.initialize();assert.ok(sync.status.signedIn);assert.ok(sync.status.synced);assert.equal(sync.status.email,'fixture@example.invalid');}
+ finally{await sync.signOut();globalThis.window=previous.window;globalThis.fetch=previous.fetch;}
 });

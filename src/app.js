@@ -241,11 +241,11 @@ function updateAccountStatus(){
 }
 
 function showAccountLogin(){
- showModal(`<h2>Entrar na sua conta</h2><p>Envie um código ao seu e-mail para acessar seus registros em outros aparelhos.</p>
+ showModal(`<h2>Entrar na sua conta</h2><p>Receba um link no seu e-mail para entrar sem senha. Abra o link neste aparelho.</p>
   <form id="account-email" class="account-form">
    <label class="field"><span>Seu e-mail</span><input name="email" type="email" autocomplete="email" required></label>
    <p class="helper" role="status"></p>
-   <button class="btn primary" type="submit">Enviar código</button>
+   <button class="btn primary" type="submit">Enviar link de acesso</button>
   </form>`);
 }
 
@@ -256,26 +256,13 @@ async function submitAccount(form){
  const status=form.querySelector('[role=status]');
  button.disabled=true;
  try{
-  if(form.id==='account-email'){
-   await sync.sendCode(email);
-   if(!form.isConnected)return;
-   form.outerHTML=`<form id="account-code" class="account-form">
-    <p>Confira o código enviado a ${e(email)}.</p>
-    <input name="email" type="hidden" value="${e(email)}">
-    <label class="field"><span>Código de acesso</span><input name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required></label>
-    <p class="helper" role="status"></p>
-    <div class="actions"><button class="btn primary" type="submit">Entrar</button><button class="btn" type="button" data-action="account-retry">Trocar e-mail ou reenviar</button></div>
-   </form>`;
-   $('#account-code input[name=code]')?.focus();
-  }else{
-   await sync.verifyCode(email,new FormData(form).get('code'));
-   $('#modal').close();render();await sync.synchronize();
-  }
+  await sync.sendLink(email);
+  if(!form.isConnected)return;
+  form.outerHTML=`<p>Confira sua caixa de entrada e abra o link recebido neste aparelho. A conta será aberta e sincronizada automaticamente.</p><p class="helper">Se não receber, confira o spam. O envio gratuito atual atende os membros da organização do aplicativo.</p><button class="btn" type="button" data-action="account-retry">Trocar e-mail ou reenviar</button>`;
  }catch(error){
-  status.textContent=error.status===429?'Aguarde um minuto antes de solicitar outro código.':form.id==='account-code'?'Não foi possível entrar. Confira o código e sua conexão.':'Não foi possível enviar o código. Confira o e-mail e tente novamente.';
+  status.textContent=error.status===429?'Aguarde antes de solicitar outro link.':'Não foi possível enviar o link. Confira o e-mail. O envio atual é limitado aos membros da organização do aplicativo.';
  }finally{button.disabled=false;}
 }
-
 function library(){return `${header('Sua mesa de estudo.','Os quatro materiais que deram origem a esta jornada.','BIBLIOTECA & AJUSTES')}${accountPanel()}${pwaPanel()}<div class="library-grid">${Object.entries(sources).map(([id,s])=>`<article class="library-card"><div class="book-cover">${icon('book',25)}<small>${s.label}</small></div><div><span class="eyebrow">${s.pages} PÁGINAS · PDF PESSOAL</span><h3 style="margin-top:9px">${s.title}</h3><p>${s.desc}</p><div class="controls"><a class="textlink" href="${sourceURL(id)}" target="_blank" rel="noopener">Abrir PDF ${icon('external',12)}</a><button class="textlink" data-nav="${s.nav}">Estudar no app ${icon('arrow',12)}</button></div></div></article>`).join('')}</div><section class="panel" style="margin-top:25px"><div class="panel-heading"><h2>Seus registros, com você.</h2><span class="tag">Neste navegador</span></div><p class="helper">Anotações, destaques, diário, progresso e pregações ficam salvos neste dispositivo. Para levar seus dados a outro aparelho, sincronize com sua conta ou exporte um backup; a importação combina registros e preserva os que já existem.</p><div class="backup-row" style="margin-top:18px"><button class="btn primary" data-action="export-backup">${icon('download',14)} Exportar backup</button><label class="btn">${icon('upload',14)} Importar backup<input type="file" id="import-backup" accept="application/json,.json"></label><button class="btn" data-action="offline-download">${icon('cloud',14)} Preparar leitura offline</button></div><p class="helper" id="offline-status" style="margin-top:13px">A Bíblia em português e os estudos ficam disponíveis offline após o primeiro carregamento com o cache ativo. O botão também baixa as 66 edições de consulta. PDFs e léxico externo exigem conexão.</p></section><section class="panel credits"><h3>Fontes, edições e notas de leitura</h3><p><strong>Português:</strong> Bíblia Livre (BLIVRE), © 2018 Diego Santos, Mario Sérgio e Marco Teles. Revisão da tradição de Almeida. Texto completo, 66 livros, 1.189 capítulos e 31.102 versículos. <a href="https://sites.google.com/site/biblialivre/" target="_blank" rel="noopener">Projeto Bíblia Livre</a> · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.</p><p><strong>Hebraico e trechos aramaicos:</strong> Westminster Leningrad Codex (WLC), Westminster Hebrew Institute. <a href="https://tanach.us/Pages/Tanach.xml#License" target="_blank" rel="noopener">Condições de uso do WLC</a>.</p><p><strong>Grego:</strong> Textus Receptus (Stephanus 1550), domínio público. WLC e TR são edições textuais de consulta, não os autógrafos. Podem diferir da base textual e da versificação da tradução portuguesa.</p><p>Dados estruturados obtidos de <a href="https://github.com/midvash/bible-data" target="_blank" rel="noopener">midvash/bible-data</a>. A consulta básica funciona com arquivos incluídos no aplicativo, sem chaves de API. O dicionário é introdutório e abre verbetes de Strong no Blue Letter Bible para aprofundamento.</p><p><strong>Seus PDFs:</strong> permanecem acessíveis pelos links pessoais. O código do aplicativo não inclui os arquivos originais nem marcas pessoais presentes neles. Reflexões devocionais creditadas a Paulo Marcondes; demais autorias não identificadas de modo seguro nas páginas analisadas.</p><p><strong>Revisão editorial:</strong> o devocional fornecido contém repetições e uma referência aparentemente copiada na semana 16. O quiz contém questões ambíguas e gabarito ausente na questão 237. As trilhas incluem notas para distinguir contexto histórico, interpretação confessional e aplicação. O cânon usado no leitor é o protestante; outras tradições cristãs têm cânones diferentes.</p></section>`;}
 
 function render(keepFocus=false){

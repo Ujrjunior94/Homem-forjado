@@ -78,7 +78,17 @@ export function mergeGuestRecords(account, guest) {
   return snapshot(combined);
 }
 
+// Consume the implicit return before rendering routes or retaining tokens in browser history.
+export function consumeAuthReturn(location, history) {
+  const params = new URLSearchParams(location.hash.slice(1));
+  if (!params.has('access_token') && !params.has('error')) return null;
+  const returned = {access_token:params.get('access_token'),refresh_token:params.get('refresh_token'),expires_in:Number(params.get('expires_in')) || 3600,error:params.has('error')};
+  history.replaceState(null, '', location.pathname + location.search + '#biblioteca');
+  return returned;
+}
+
 export function createSync({ getState, apply, canApply, notify }) {
+  const authReturn = typeof window !== 'undefined' && window.location ? consumeAuthReturn(window.location, window.history) : null;
   let config = null;
   let session = null;
   let releaseAccount = null;
@@ -268,7 +278,19 @@ export function createSync({ getState, apply, canApply, notify }) {
       status('A conta será habilitada quando o banco do Homem Forjado estiver conectado. Seus registros ficam neste navegador.');
       return;
     }
-    status('Entre com um código enviado ao seu e-mail.');
+    status('Entre pelo link enviado ao seu e-mail.');
+    if (authReturn) {
+      try {
+        if (authReturn.error || !authReturn.access_token || !authReturn.refresh_token) throw Error('Link inválido.');
+        const user = await request('/auth/v1/user', {token:authReturn.access_token});
+        saveSession({...authReturn,user});
+        if (await activate()) await synchronize();
+      } catch {
+        clearSession();
+        status('Não foi possível validar este link. Solicite um novo acesso por e-mail.');
+      }
+      return;
+    }
     try {
       const stored = JSON.parse(sessionStorage.getItem(sessionKey) || 'null');
       if (stored?.origin === config.url && stored.session?.user?.id && stored.session.access_token && stored.session.refresh_token) session = stored.session;
@@ -287,7 +309,7 @@ export function createSync({ getState, apply, canApply, notify }) {
     initialize,
     get status() { return { configured: Boolean(config), email: releaseAccount ? session?.user.email : '', signedIn: Boolean(session && releaseAccount), busy, message, updated, pending: pending?.count, synced }; },
     save() { const saved = persist(); if (saved) schedule(); return saved; },
-    async sendCode(email) {
+    async sendLink(email) {
       await request('/auth/v1/otp', { body: { email, create_user: true } });
     },
     async verifyCode(email, token) {

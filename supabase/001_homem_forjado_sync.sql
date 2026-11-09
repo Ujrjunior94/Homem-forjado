@@ -14,7 +14,11 @@ drop policy if exists hf_read_own_backup on public.hf_study_backups;
 create policy hf_read_own_backup on public.hf_study_backups
   for select to authenticated using ((select auth.uid()) = user_id);
 
-create or replace function public.hf_save_study_backup(expected_revision integer, next_backup jsonb)
+create schema if not exists hf_private;
+revoke all on schema hf_private from public, anon;
+grant usage on schema hf_private to authenticated;
+
+create or replace function hf_private.hf_save_study_backup(expected_revision integer, next_backup jsonb)
 returns integer
 language plpgsql
 security definer
@@ -42,6 +46,13 @@ begin
 end;
 $$;
 
+revoke all on function hf_private.hf_save_study_backup(integer,jsonb) from public,anon;
+grant execute on function hf_private.hf_save_study_backup(integer,jsonb) to authenticated;
+
+create or replace function public.hf_save_study_backup(expected_revision integer,next_backup jsonb)
+returns integer language sql security invoker set search_path='' as $$
+  select hf_private.hf_save_study_backup(expected_revision,next_backup);
+$$;
 revoke all on function public.hf_save_study_backup(integer, jsonb) from public, anon;
 grant execute on function public.hf_save_study_backup(integer, jsonb) to authenticated;
 commit;

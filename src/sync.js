@@ -258,6 +258,10 @@ export function createSync({ getState, apply, canApply, notify }) {
     try {
       const response = await fetch('/sync-config.json', { cache: 'no-store' });
       const settings = await response.json();
+      if (settings.authReady === false) {
+        status('Banco conectado. O acesso à conta aguarda a configuração do e-mail de entrada. Seus registros continuam salvos neste navegador.');
+        return;
+      }
       if (/^https:\/\/[a-z0-9]+\.supabase\.co$/.test(settings.url || '') && /^sb_publishable_[\w-]+$/.test(settings.key || '')) config = settings;
     } catch {}
     if (!config) {

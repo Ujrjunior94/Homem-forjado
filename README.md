@@ -77,3 +77,10 @@ O primeiro acesso com internet instala um cache completo da interface, Bíblia p
 As versões usam cache calculado pelo conteúdo, sem troca automática da versão aberta. Quando houver atualização, o botão **Atualizar agora** ativa a nova versão. O cache dos originais permanece nas atualizações que não alteram esses textos.
 
 Validação: `npm run build && npm test` executa 12 testes, incluindo completude dos ícones/arquivos, ativação explícita e leitura do cache com rede simulada indisponível. Isso não substitui a instalação e o teste de desconexão em um aparelho físico. A configuração do banco continua pendente enquanto não houver projeto Supabase vinculado e teste real de autenticação/sincronização.
+
+
+## Banco vinculado
+
+Projeto Supabase **Homem Forjado**, região São Paulo, referência `tytafvxibmngjipslpck`, criado na opção gratuita. A tabela `hf_study_backups` usa RLS por usuário. A gravação por revisão fica em função privada; a API expõe um encaminhamento sem privilégios adicionais. Teste transacional no banco confirmou criação, atualização, bloqueio de revisão antiga, isolamento entre contas e rejeição sem autenticação; o teste foi desfeito por rollback. A análise de segurança retornou sem avisos após essa configuração.
+
+A Vercel recebeu `HF_SUPABASE_URL` e `HF_SUPABASE_PUBLISHABLE_KEY`. O login permanece desabilitado até configurar o modelo Magic Link com `{{ .Token }}`, conferir entrega de e-mails e definir `HF_SUPABASE_AUTH_READY=true` na Vercel com nova implantação. O conector não oferece alteração de modelos de autenticação; o painel exige login separado. SMTP personalizado é necessário para destinatários fora da organização quando usado o serviço de envio padrão do Supabase. Nenhuma autenticação/sincronização real de usuário foi considerada concluída.

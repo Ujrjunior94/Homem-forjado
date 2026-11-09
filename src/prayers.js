@@ -1,5 +1,6 @@
 import {escapeHTML as e,normalize} from './core.js';
 import {editionSelect,scriptureText} from './bible-editions.js';
+export function prayerNoteId(key){const prefix='lesson:prayer:';return key.startsWith(prefix)?key.slice(prefix.length):null;}
 export function prayerIndex(prayers,{query='',situation='Todas'}={}){
  const situations=['Todas',...new Set(prayers.flatMap(p=>p.situations))];
  const found=prayers.filter(p=>(situation==='Todas'||p.situations.includes(situation))&&normalize([p.title,p.context,p.ref,p.speaker,...p.situations].join(' ')).includes(normalize(query)));

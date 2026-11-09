@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {parseReference,searchVerses} from '../src/core.js';
 import {editions,editionById,scriptureText,passageVerses} from '../src/bible-editions.js';
-import {prayerIndex,prayerDetail} from '../src/prayers.js';
+import {prayerIndex,prayerDetail,prayerNoteId} from '../src/prayers.js';
 import {renderAdvancedStudy} from '../src/study-depth.js';
 const load=async name=>JSON.parse(await readFile('dist/data/'+name+'.json','utf8'));
 const [base,arc,bpm,prayers,advanced,men,pdfs]=await Promise.all(['bible','bible-arc1911','bible-bpm','prayers','advanced-studies','men-of-bible','pdf-studies'].map(load));
@@ -45,5 +45,10 @@ test('all 32 profiles and 20 PDF sessions have referenced multi-part exegesis, a
 test('new editions, prayers and detailed analysis belong to the offline shell',async()=>{
  const sw=await readFile('dist/sw.js','utf8'),paths=JSON.parse(sw.match(/const CORE_FILES = (.+);/)[1]);
  for(const path of ['/data/bible-arc1911.json','/data/bible-bpm.json','/data/prayers.json','/data/advanced-studies.json','/prayers.js','/bible-editions.js'])assert.ok(paths.includes(path),path);
- const app=await readFile('src/app.js','utf8');assert.ok(app.includes("state.notes['lesson:'+el.dataset.id]"));assert.ok(app.includes("key.startsWith('lesson:prayer:')"));assert.ok(app.includes("searchVerses(readerBooks(),searchQuery)"));
+ const app=await readFile('src/app.js','utf8');assert.ok(app.includes("state.notes['lesson:'+el.dataset.id]"));assert.ok(app.includes("const prayerId=prayerNoteId(key)"));assert.ok(app.includes("searchVerses(readerBooks(),searchQuery)"));
+});
+
+test('prayer notebook IDs resolve the exact saved page without retaining a separator',()=>{
+ for(const p of prayers){assert.equal(prayerNoteId('lesson:prayer:'+p.id),p.id);assert.equal(prayers.find(x=>x.id===prayerNoteId('lesson:prayer:'+p.id)).title,p.title);}
+ assert.equal(prayerNoteId('lesson:man:moises'),null);assert.equal(prayerNoteId('43:1'),null);
 });

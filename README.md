@@ -93,3 +93,8 @@ A Vercel recebeu `HF_SUPABASE_URL` e `HF_SUPABASE_PUBLISHABLE_KEY`. O acesso usa
 Treze imagens/quadros reais foram extraídos dos materiais e convertidos em WebP, com página, recorte, legenda e texto alternativo registrados em `src/data/pdf-studies.json`. As imagens ampliam ao tocar e participam do cache offline da PWA. Os PDFs originais e dados pessoais de suas marcas de identificação não são incluídos. O conteúdo não é uma transcrição integral: introduções administrativas/capas são omitidas, os panoramas são adaptados, e leituras do material aparecem identificadas. Avisos preservam as diferenças de interpretação, as repetições do roteiro e o gabarito ausente da questão 237.
 
 Para reconstruir a extração a partir dos quatro arquivos locais, use `python scripts/build_pdf_studies.py --input-directory /caminho/dos/pdfs` (PyMuPDF e Pillow). O diretório de entrada permanece fora do repositório. As páginas citadas são as páginas físicas do PDF, não a numeração divergente do rodapé de Jornada.
+
+
+## Homens da Bíblia (2.5)
+
+Seção própria no índice inicial, no menu e em Estudos. São 32 perfis com contexto, feitos, modo de agir, propósito/papel no relato, limites e três aprendizados. Os textos distinguem chamados declarados de sínteses narrativas e mantêm Jesus em uma categoria própria. Cada perfil abre as passagens no leitor, permite reflexão e conclusão e usa as chaves `lesson:man:<id>` e `lessonDone[man:<id>]`, já cobertas pelo backup/sincronização. O caderno abre novamente o perfil correto. Há busca por nome/tema, filtro por grupo, links diretos e navegação entre perfis. Dados e módulo são incluídos no cache da PWA.
